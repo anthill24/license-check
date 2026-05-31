@@ -16,6 +16,10 @@ Initial release.
   package → license → category (`--format table|json`).
 - `scan --policy <file>`: evaluate dependencies against a policy and exit `1` on
   violations, with a `STATUS` column and a violation list on stderr.
+- `scan --fail-on <categories>`: a quick CI gate that fails on the listed
+  categories without requiring a policy file. A precise gate — unknown/missing
+  licenses are not failed on unless `unknown` is listed. Composes with
+  `--policy`.
 - `report` command: generate a Markdown (or JSON) license inventory suitable for
   a docs page or release attachment.
 - `missing` command: list dependencies with no detectable license.

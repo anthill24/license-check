@@ -4,6 +4,7 @@ import {
   loadPolicy,
   evaluatePackage,
   evaluateAll,
+  policyWithFailOnCategories,
 } from "../src/policy.js";
 import type { PackageRecord, PolicyConfig } from "../src/types.js";
 import { categoryOfExpression } from "../src/spdx.js";
@@ -201,6 +202,46 @@ describe("evaluatePackage — overrides", () => {
       overrides: { "gpl-pkg": "GPL-3.0-only", "gpl-pkg@3.0.1": "MIT" },
     };
     expect(evaluatePackage(pkg("gpl-pkg", "GPL-3.0-only", "3.0.1"), policy).status).toBe("allowed");
+  });
+});
+
+describe("policyWithFailOnCategories", () => {
+  it("fails only on the listed categories (precise gate)", () => {
+    const policy = policyWithFailOnCategories({}, ["strong-copyleft"]);
+    expect(evaluatePackage(pkg("a", "GPL-3.0-only"), policy).status).toBe("denied");
+    expect(evaluatePackage(pkg("b", "MIT"), policy).status).toBe("allowed");
+    expect(evaluatePackage(pkg("c", "AGPL-3.0-only"), policy).status).toBe("allowed");
+    expect(evaluatePackage(pkg("d", "MPL-2.0"), policy).status).toBe("allowed");
+  });
+
+  it("does not fail on unknown/missing unless 'unknown' is listed", () => {
+    const lenient = policyWithFailOnCategories({}, ["strong-copyleft"]);
+    expect(evaluatePackage(pkg("e", null), lenient).status).toBe("allowed");
+    expect(evaluatePackage(pkg("f", "Frobnicate-1.0"), lenient).status).toBe("allowed");
+
+    const strict = policyWithFailOnCategories({}, ["strong-copyleft", "unknown"]);
+    expect(evaluatePackage(pkg("e", null), strict).status).toBe("unknown");
+    expect(evaluatePackage(pkg("f", "Frobnicate-1.0"), strict).status).toBe("unknown");
+  });
+
+  it("further restricts an existing allowedCategories base", () => {
+    const base: PolicyConfig = { allowedCategories: ["permissive", "weak-copyleft"] };
+    const policy = policyWithFailOnCategories(base, ["weak-copyleft"]);
+    expect(policy.allowedCategories).toEqual(["permissive"]);
+    expect(evaluatePackage(pkg("a", "MPL-2.0"), policy).status).toBe("denied");
+    expect(evaluatePackage(pkg("b", "MIT"), policy).status).toBe("allowed");
+  });
+
+  it("can fail on every concrete category at once", () => {
+    const policy = policyWithFailOnCategories({}, [
+      "permissive",
+      "weak-copyleft",
+      "strong-copyleft",
+      "network-copyleft",
+      "proprietary",
+    ]);
+    expect(policy.allowedCategories).toEqual([]);
+    expect(evaluatePackage(pkg("a", "MIT"), policy).status).toBe("denied");
   });
 });
 

@@ -23,7 +23,7 @@ import {
   parseSpdxExpression,
   type SpdxNode,
 } from "./spdx.js";
-import type { Evaluation, PackageRecord, PolicyConfig } from "./types.js";
+import type { Evaluation, LicenseCategory, PackageRecord, PolicyConfig } from "./types.js";
 
 /** Default policy when none is supplied: report only, never fail. */
 export const DEFAULT_POLICY: PolicyConfig = {};
@@ -128,6 +128,41 @@ export function loadPolicy(path: string): PolicyConfig {
     throw new Error(`Policy file ${path} is not valid JSON: ${(err as Error).message}`);
   }
   return validatePolicy(parsed);
+}
+
+/** The five concrete (non-`unknown`) license categories. */
+const CONCRETE_CATEGORIES: LicenseCategory[] = [
+  "permissive",
+  "weak-copyleft",
+  "strong-copyleft",
+  "network-copyleft",
+  "proprietary",
+];
+
+/**
+ * Derive a policy that fails on a specific set of categories, without requiring
+ * a full policy file. This powers the `--fail-on` CLI flag.
+ *
+ * It is a precise gate: the resulting policy allows every concrete category
+ * except those listed. Unknown/missing licenses fail only when `"unknown"` is
+ * explicitly listed; otherwise the existing `allowUnknown` setting is preserved
+ * (defaulting to permissive, so `--fail-on strong-copyleft` fails *only* on
+ * strong copyleft). When a base policy already restricts `allowedCategories`,
+ * the listed categories are removed from it (further restriction, never
+ * widening).
+ */
+export function policyWithFailOnCategories(
+  policy: PolicyConfig,
+  failOn: LicenseCategory[],
+): PolicyConfig {
+  const base = policy.allowedCategories ?? CONCRETE_CATEGORIES;
+  const allowedCategories = base.filter((c) => !failOn.includes(c));
+  const failUnknown = failOn.includes("unknown");
+  return {
+    ...policy,
+    allowedCategories,
+    allowUnknown: failUnknown ? false : (policy.allowUnknown ?? true),
+  };
 }
 
 /** Per-id verdict used while evaluating an expression tree. */
