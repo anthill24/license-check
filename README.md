@@ -70,6 +70,7 @@ COMMANDS
 OPTIONS
   --dir <path>        Project root to scan (default: current directory)
   --policy <file>     Policy/config file (default: auto-detect .licensecheckrc.json)
+  --fail-on <cats>    Comma-separated categories to fail on, without a policy file
   --format <fmt>      Output format (table|json for scan/missing; markdown|json for report)
   --include-dev       Include devDependencies in the walk
   --no-optional       Exclude optionalDependencies from the walk
@@ -110,6 +111,20 @@ license-check scan --policy .licensecheckrc.json
 When a policy is active, a `STATUS` column is added and the process exits `1`
 if any dependency violates the policy, listing each violation on stderr. This is
 what makes it useful in CI.
+
+### `scan --fail-on` — gate without a policy file
+
+For a quick CI gate you don't need a policy file at all:
+
+```bash
+license-check scan --fail-on strong-copyleft,network-copyleft
+```
+
+This fails (exit `1`) only for dependencies in the listed categories. It is a
+*precise* gate: unknown/missing licenses are not failed on unless you add
+`unknown` to the list. Valid categories: `permissive`, `weak-copyleft`,
+`strong-copyleft`, `network-copyleft`, `proprietary`, `unknown`. `--fail-on`
+composes with a `--policy` file, further restricting it.
 
 ### `scan --format json` — machine-readable
 
