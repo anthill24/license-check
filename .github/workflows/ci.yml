@@ -68,11 +68,13 @@ jobs:
           policy: test/fixtures/policies/permissive-only.json
 
       - name: Assert the action failed and reported violations
+        env:
+          OUTCOME: ${{ steps.licenses.outcome }}
+          VIOLATIONS: ${{ steps.licenses.outputs.violations }}
         run: |
-          echo "outcome=${{ steps.licenses.outcome }}"
-          echo "violations=${{ steps.licenses.outputs.violations }}"
-          test "${{ steps.licenses.outcome }}" = "failure"
-          test "${{ steps.licenses.outputs.violations }}" -gt 0
+          echo "outcome=$OUTCOME violations=$VIOLATIONS"
+          test "$OUTCOME" = "failure"
+          test "${VIOLATIONS:-0}" -gt 0
 
       # And a passing case: the policy allows everything, so it must succeed.
       - name: Run action against a passing policy

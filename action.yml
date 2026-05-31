@@ -60,8 +60,9 @@ runs:
         INPUT_ALLOW_UNKNOWN: ${{ inputs.allow-unknown }}
         INPUT_FAIL_ON_VIOLATIONS: ${{ inputs.fail-on-violations }}
       run: |
-        # No errexit: the scan is *expected* to exit non-zero on violations and
-        # we capture that explicitly. -u/pipefail still catch real mistakes.
+        # GitHub's default bash runs with errexit (-e). The scan is *expected*
+        # to exit non-zero on violations, so its exit code is captured with
+        # `|| CODE=$?` (which is exempt from errexit) rather than aborting.
         set -uo pipefail
         CLI="$ACTION_PATH/dist/cli.js"
 
@@ -83,8 +84,9 @@ runs:
         } >> "$GITHUB_STEP_SUMMARY"
 
         # 2) Run the policy scan; capture stdout (table) and stderr (violations).
-        node "$CLI" scan "${FLAGS[@]}" 1> scan.out 2> scan.err
-        CODE=$?
+        # `|| CODE=$?` keeps errexit from aborting on the expected non-zero exit.
+        CODE=0
+        node "$CLI" scan "${FLAGS[@]}" 1> scan.out 2> scan.err || CODE=$?
 
         # Surface violations in the summary and step log.
         if [ "$CODE" -eq 1 ]; then
