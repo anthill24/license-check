@@ -1,0 +1,8 @@
+{
+  "name": "auto-project",
+  "version": "1.0.0",
+  "dependencies": {
+    "gpl-pkg": "^3.0.0",
+    "mit-pkg": "^1.0.0"
+  }
+}

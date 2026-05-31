@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Lint, typecheck, test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # Dogfood: run the freshly-built CLI against this repo's own dependency
+      # tree. The project has zero runtime deps, so devDependencies are scanned.
+      - name: Self-check (dogfood)
+        run: node dist/cli.js scan --include-dev --no-color
+
+  action-smoke:
+    name: GitHub Action smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Run the action against a committed fixture with a permissive-only policy.
+      # The fixture contains GPL/AGPL packages, so violations are expected and
+      # the action should fail — we allow that and assert on it below.
+      - name: Run action against violating fixture
+        id: licenses
+        continue-on-error: true
+        uses: ./
+        with:
+          directory: test/fixtures/sample-project
+          policy: test/fixtures/policies/permissive-only.json
+
+      - name: Assert the action failed and reported violations
+        run: |
+          echo "outcome=${{ steps.licenses.outcome }}"
+          echo "violations=${{ steps.licenses.outputs.violations }}"
+          test "${{ steps.licenses.outcome }}" = "failure"
+          test "${{ steps.licenses.outputs.violations }}" -gt 0
+
+      # And a passing case: the policy allows everything, so it must succeed.
+      - name: Run action against a passing policy
+        uses: ./
+        with:
+          directory: test/fixtures/sample-project
+          allow-unknown: "true"

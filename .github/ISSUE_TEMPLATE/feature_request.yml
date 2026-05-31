@@ -1,0 +1,53 @@
+name: Feature request
+description: Suggest a new capability or improvement.
+title: "[feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Check the
+        [roadmap](https://github.com/anthill24/license-check#roadmap) and existing
+        issues first to avoid duplicates.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What are you trying to do that license-check can't do today?
+      placeholder: I use pnpm workspaces and the symlinked node_modules layout isn't resolved.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like license-check to do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Dependency resolution (npm/yarn/pnpm/PnP)
+        - SPDX parsing / category map
+        - License detection
+        - Policy / config
+        - Output / reporting
+        - GitHub Action
+        - Other
+    validations:
+      required: false
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd be willing to help implement this.
+          required: false

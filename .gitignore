@@ -1,0 +1,10 @@
+# Anchored to the repo root so fixture node_modules under test/fixtures/ are
+# still committed (they are intentional test data, not installed deps).
+/node_modules/
+/dist/
+/coverage/
+*.log
+.DS_Store
+.env
+.env.*
+*.tsbuildinfo

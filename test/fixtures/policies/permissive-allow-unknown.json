@@ -1,0 +1,9 @@
+{
+  "allowedCategories": ["permissive", "weak-copyleft"],
+  "allow": ["MPL-2.0"],
+  "deny": ["AGPL-3.0-only"],
+  "overrides": {
+    "unknown-license-pkg": "MIT"
+  },
+  "allowUnknown": true
+}
