@@ -1,0 +1,29 @@
+{
+  "name": "sample-project",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "permissive-mit": "^1.0.0",
+    "apache-pkg": "^2.0.0",
+    "dual-pkg": "^1.0.0",
+    "gpl-pkg": "^3.0.0",
+    "agpl-pkg": "^3.0.0",
+    "mpl-pkg": "^2.0.0",
+    "no-license-pkg": "^1.0.0",
+    "license-file-only": "^1.0.0",
+    "gpl-file-pkg": "^1.0.0",
+    "unlicensed-pkg": "^1.0.0",
+    "see-license-pkg": "^1.0.0",
+    "unknown-license-pkg": "^1.0.0",
+    "deprecated-object-pkg": "^1.0.0",
+    "deprecated-array-pkg": "^1.0.0",
+    "@scope/scoped-pkg": "^1.0.0",
+    "parent-with-nested": "^1.0.0"
+  },
+  "devDependencies": {
+    "dev-only-gpl": "^3.0.0"
+  },
+  "optionalDependencies": {
+    "optional-isc-pkg": "^1.0.0"
+  }
+}

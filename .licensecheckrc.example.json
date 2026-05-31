@@ -1,0 +1,23 @@
+{
+  "$comment": "Example license-check policy. Copy to .licensecheckrc.json and edit. All fields are optional.",
+
+  "allowedCategories": ["permissive", "weak-copyleft"],
+
+  "allow": ["MPL-2.0"],
+
+  "deny": ["GPL-3.0-only", "AGPL-3.0-only"],
+
+  "overrides": {
+    "some-internal-pkg": "MIT",
+    "mislabeled-pkg@1.2.3": "BSD-3-Clause"
+  },
+
+  "allowUnknown": false,
+
+  "include": {
+    "dependencies": true,
+    "devDependencies": false,
+    "optionalDependencies": true,
+    "peerDependencies": false
+  }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/anthill24/license-check/security/advisories/new
+    about: Please report security issues privately via GitHub Security Advisories, not as a public issue. See SECURITY.md.
+  - name: Question / discussion
+    url: https://github.com/anthill24/license-check/issues
+    about: For usage questions, open a regular issue with the [feature]/[bug] templates or start a discussion.
