@@ -10,14 +10,48 @@ import { existsSync, realpathSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { walkDependencies, DEFAULT_WALK_OPTIONS } from "./walk.js";
-import { loadPolicy, evaluateAll, DEFAULT_POLICY } from "./policy.js";
+import {
+  loadPolicy,
+  evaluateAll,
+  policyWithFailOnCategories,
+  DEFAULT_POLICY,
+} from "./policy.js";
 import {
   renderScanTable,
   renderJson,
   renderMarkdownReport,
   renderMissing,
 } from "./format.js";
-import type { PolicyConfig, WalkOptions } from "./types.js";
+import type { LicenseCategory, PolicyConfig, WalkOptions } from "./types.js";
+
+const VALID_CATEGORIES: readonly LicenseCategory[] = [
+  "permissive",
+  "weak-copyleft",
+  "strong-copyleft",
+  "network-copyleft",
+  "proprietary",
+  "unknown",
+];
+
+/** Parse and validate a comma-separated `--fail-on` category list. */
+function parseFailOn(value: string): { categories: LicenseCategory[]; error?: string } {
+  const parts = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (parts.length === 0) {
+    return { categories: [], error: "--fail-on requires at least one category" };
+  }
+  for (const p of parts) {
+    if (!VALID_CATEGORIES.includes(p as LicenseCategory)) {
+      return {
+        categories: [],
+        error: `invalid --fail-on category "${p}" (valid: ${VALID_CATEGORIES.join(", ")})`,
+      };
+    }
+  }
+  return { categories: parts as LicenseCategory[] };
+}
 
 /** Keep in sync with package.json. Verified by a unit test. */
 export const VERSION = "0.1.0";
@@ -35,6 +69,7 @@ interface ParsedArgs {
   dir: string | undefined;
   policy: string | undefined;
   format: string | undefined;
+  failOn: string | undefined;
   includeDev: boolean;
   includeOptional: boolean | undefined;
   allowUnknown: boolean;
@@ -50,6 +85,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     dir: undefined,
     policy: undefined,
     format: undefined,
+    failOn: undefined,
     includeDev: false,
     includeOptional: undefined,
     allowUnknown: false,
@@ -93,6 +129,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       case "--format":
         parsed.format = needsValue(arg, argv[++i]);
         break;
+      case "--fail-on":
+        parsed.failOn = needsValue(arg, argv[++i]);
+        break;
       case "--include-dev":
         parsed.includeDev = true;
         break;
@@ -114,6 +153,7 @@ function parseArgs(argv: string[]): ParsedArgs {
           if (flag === "--dir") parsed.dir = value;
           else if (flag === "--policy") parsed.policy = value;
           else if (flag === "--format") parsed.format = value;
+          else if (flag === "--fail-on") parsed.failOn = value;
           else if (flag === "--include-dev") parsed.includeDev = parseBool(value);
           else if (flag === "--allow-unknown") parsed.allowUnknown = parseBool(value);
           else if (flag === "--no-optional") parsed.includeOptional = !parseBool(value);
@@ -145,6 +185,10 @@ COMMANDS
 OPTIONS
   --dir <path>        Project root to scan (default: current directory)
   --policy <file>     Policy/config file (default: auto-detect ${DEFAULT_CONFIG_NAME})
+  --fail-on <cats>    Comma-separated categories to fail on, without a policy
+                        file (e.g. strong-copyleft,network-copyleft). Valid:
+                        permissive, weak-copyleft, strong-copyleft,
+                        network-copyleft, proprietary, unknown
   --format <fmt>      Output format:
                         scan    -> table | json   (default: table)
                         report  -> markdown | json (default: markdown)
@@ -248,6 +292,19 @@ export function run(argv: string[], io: CliIO): number {
   }
   if (args.allowUnknown) policy = { ...policy, allowUnknown: true };
 
+  // `--fail-on <categories>` derives a quick-gate policy on top of whatever was
+  // loaded, failing on the listed categories without needing a policy file.
+  let failOnActive = false;
+  if (args.failOn !== undefined) {
+    const { categories, error } = parseFailOn(args.failOn);
+    if (error) {
+      io.stderr(`error: ${error}`);
+      return 2;
+    }
+    policy = policyWithFailOnCategories(policy, categories);
+    failOnActive = true;
+  }
+
   const walkOptions = resolveWalkOptions(policy, args);
 
   let packages;
@@ -260,7 +317,7 @@ export function run(argv: string[], io: CliIO): number {
 
   switch (args.command) {
     case "scan":
-      return runScan(packages, policy, policyPath, args, io);
+      return runScan(packages, policy, policyPath !== undefined || failOnActive, args, io);
     case "report":
       return runReport(packages, args, io);
     case "missing":
@@ -273,11 +330,11 @@ export function run(argv: string[], io: CliIO): number {
 function runScan(
   packages: ReturnType<typeof walkDependencies>,
   policy: PolicyConfig,
-  policyPath: string | undefined,
+  policyConfigured: boolean,
   args: ParsedArgs,
   io: CliIO,
 ): number {
-  const hasPolicy = policyPath !== undefined || args.allowUnknown;
+  const hasPolicy = policyConfigured || args.allowUnknown;
   const { evaluations, violations } = evaluateAll(packages, policy);
   const format = args.format ?? "table";
 

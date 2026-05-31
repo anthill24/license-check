@@ -48,6 +48,7 @@ export {
   validatePolicy,
   evaluatePackage,
   evaluateAll,
+  policyWithFailOnCategories,
   DEFAULT_POLICY,
 } from "./policy.js";
 

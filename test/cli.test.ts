@@ -151,6 +151,43 @@ describe("scan", () => {
     expect(r.stderr).toContain("unknown format");
   });
 
+  it("--fail-on gates on the listed categories only", () => {
+    const r = cli([
+      "scan",
+      "--dir",
+      SAMPLE_PROJECT,
+      "--fail-on",
+      "strong-copyleft,network-copyleft",
+      "--no-color",
+    ]);
+    expect(r.code).toBe(1);
+    expect(r.stderr).toMatch(/gpl-pkg/);
+    expect(r.stderr).toMatch(/agpl-pkg/);
+    // weak-copyleft (mpl-pkg) and unknown licenses are NOT failed on here.
+    expect(r.stderr).not.toMatch(/mpl-pkg/);
+    expect(r.stderr).not.toMatch(/unknown-license-pkg/);
+  });
+
+  it("--fail-on does not flag unknown/missing unless 'unknown' is listed", () => {
+    const lenient = cli(["scan", "--dir", SAMPLE_PROJECT, "--fail-on", "proprietary", "--no-color"]);
+    expect(lenient.stderr).not.toMatch(/no-license-pkg/);
+    const strict = cli(["scan", "--dir", SAMPLE_PROJECT, "--fail-on", "unknown", "--no-color"]);
+    expect(strict.code).toBe(1);
+    expect(strict.stderr).toMatch(/no-license-pkg/);
+  });
+
+  it("--fail-on rejects an invalid category", () => {
+    const r = cli(["scan", "--dir", SAMPLE_PROJECT, "--fail-on", "bananas"]);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain("invalid --fail-on category");
+  });
+
+  it("accepts --fail-on=value form", () => {
+    const r = cli(["scan", `--dir=${SAMPLE_PROJECT}`, "--fail-on=strong-copyleft", "--no-color"]);
+    expect(r.code).toBe(1);
+    expect(r.stderr).toMatch(/gpl-pkg/);
+  });
+
   it("errors on an invalid policy file", () => {
     const r = cli([
       "scan",
