@@ -176,6 +176,22 @@ describe("scan", () => {
     expect(strict.stderr).toMatch(/no-license-pkg/);
   });
 
+  it("--fail-on preserves an existing policy's implicit unknown-license failures", () => {
+    const r = cli([
+      "scan",
+      "--dir",
+      SAMPLE_PROJECT,
+      "--policy",
+      fixture("policies", "permissive-only.json"),
+      "--fail-on",
+      "strong-copyleft",
+      "--no-color",
+    ]);
+    expect(r.code).toBe(1);
+    expect(r.stderr).toMatch(/no-license-pkg/);
+    expect(r.stderr).toMatch(/unknown-license-pkg/);
+  });
+
   it("--fail-on rejects an invalid category", () => {
     const r = cli(["scan", "--dir", SAMPLE_PROJECT, "--fail-on", "bananas"]);
     expect(r.code).toBe(2);

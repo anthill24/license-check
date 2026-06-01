@@ -120,11 +120,12 @@ For a quick CI gate you don't need a policy file at all:
 license-check scan --fail-on strong-copyleft,network-copyleft
 ```
 
-This fails (exit `1`) only for dependencies in the listed categories. It is a
-*precise* gate: unknown/missing licenses are not failed on unless you add
-`unknown` to the list. Valid categories: `permissive`, `weak-copyleft`,
-`strong-copyleft`, `network-copyleft`, `proprietary`, `unknown`. `--fail-on`
-composes with a `--policy` file, further restricting it.
+Without a policy file, this fails (exit `1`) only for dependencies in the listed
+categories. It is a *precise* gate: unknown/missing licenses are not failed on
+unless you add `unknown` to the list. Valid categories: `permissive`,
+`weak-copyleft`, `strong-copyleft`, `network-copyleft`, `proprietary`,
+`unknown`. `--fail-on` composes with a `--policy` file, further restricting it
+while preserving the policy's `allowUnknown` behavior.
 
 ### `scan --format json` — machine-readable
 

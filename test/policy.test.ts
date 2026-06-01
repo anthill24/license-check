@@ -215,13 +215,20 @@ describe("policyWithFailOnCategories", () => {
   });
 
   it("does not fail on unknown/missing unless 'unknown' is listed", () => {
-    const lenient = policyWithFailOnCategories({}, ["strong-copyleft"]);
+    const lenient = policyWithFailOnCategories({ allowUnknown: true }, ["strong-copyleft"]);
     expect(evaluatePackage(pkg("e", null), lenient).status).toBe("allowed");
     expect(evaluatePackage(pkg("f", "Frobnicate-1.0"), lenient).status).toBe("allowed");
 
-    const strict = policyWithFailOnCategories({}, ["strong-copyleft", "unknown"]);
+    const strict = policyWithFailOnCategories({ allowUnknown: true }, ["strong-copyleft", "unknown"]);
     expect(evaluatePackage(pkg("e", null), strict).status).toBe("unknown");
     expect(evaluatePackage(pkg("f", "Frobnicate-1.0"), strict).status).toBe("unknown");
+  });
+
+  it("preserves an existing policy's implicit unknown-license failures", () => {
+    const base: PolicyConfig = { allowedCategories: ["permissive"] };
+    const policy = policyWithFailOnCategories(base, ["strong-copyleft"]);
+    expect(evaluatePackage(pkg("e", null), policy).status).toBe("unknown");
+    expect(evaluatePackage(pkg("f", "Frobnicate-1.0"), policy).status).toBe("unknown");
   });
 
   it("further restricts an existing allowedCategories base", () => {

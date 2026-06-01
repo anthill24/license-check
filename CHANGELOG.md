@@ -19,7 +19,7 @@ Initial release.
 - `scan --fail-on <categories>`: a quick CI gate that fails on the listed
   categories without requiring a policy file. A precise gate — unknown/missing
   licenses are not failed on unless `unknown` is listed. Composes with
-  `--policy`.
+  `--policy`, preserving the policy's `allowUnknown` behavior.
 - `report` command: generate a Markdown (or JSON) license inventory suitable for
   a docs page or release attachment.
 - `missing` command: list dependencies with no detectable license.

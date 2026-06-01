@@ -301,6 +301,11 @@ export function run(argv: string[], io: CliIO): number {
       io.stderr(`error: ${error}`);
       return 2;
     }
+    // Standalone --fail-on is a category-only gate unless "unknown" is listed.
+    // Loaded policies keep their normal implicit allowUnknown default.
+    if (policyPath === undefined && !args.allowUnknown) {
+      policy = { ...policy, allowUnknown: true };
+    }
     policy = policyWithFailOnCategories(policy, categories);
     failOnActive = true;
   }

@@ -144,12 +144,10 @@ const CONCRETE_CATEGORIES: LicenseCategory[] = [
  * a full policy file. This powers the `--fail-on` CLI flag.
  *
  * It is a precise gate: the resulting policy allows every concrete category
- * except those listed. Unknown/missing licenses fail only when `"unknown"` is
- * explicitly listed; otherwise the existing `allowUnknown` setting is preserved
- * (defaulting to permissive, so `--fail-on strong-copyleft` fails *only* on
- * strong copyleft). When a base policy already restricts `allowedCategories`,
- * the listed categories are removed from it (further restriction, never
- * widening).
+ * except those listed. Unknown/missing licenses are controlled by the existing
+ * `allowUnknown` setting unless `"unknown"` is explicitly listed. When a base
+ * policy already restricts `allowedCategories`, the listed categories are
+ * removed from it (further restriction, never widening).
  */
 export function policyWithFailOnCategories(
   policy: PolicyConfig,
@@ -161,7 +159,7 @@ export function policyWithFailOnCategories(
   return {
     ...policy,
     allowedCategories,
-    allowUnknown: failUnknown ? false : (policy.allowUnknown ?? true),
+    allowUnknown: failUnknown ? false : policy.allowUnknown,
   };
 }
 
